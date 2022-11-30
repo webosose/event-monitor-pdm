@@ -17,3 +17,19 @@
 #pragma once
 
 #include <event-monitor-api/pluginbase.hpp>
+
+class PdmPlugin: public EventMonitor::PluginBase {
+public:
+    PdmPlugin(EventMonitor::Manager *manager);
+    virtual ~PdmPlugin();
+    void startMonitoring();
+    EventMonitor::UnloadResult stopMonitoring(const std::string &service);
+
+private:
+    void attachedDeviceStatusCallback(pbnjson::JValue &previousValue,
+            pbnjson::JValue &value);
+    void blockToasts(unsigned int timeMs);
+private:
+    //for ethernet toast
+    bool toastsBlocked;
+};
