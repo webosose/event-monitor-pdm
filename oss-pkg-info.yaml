@@ -1,0 +1,4 @@
+Open Source Software Package:
+- name: webOSOSE-event-monitor-pdm
+  source: git://github.com/webosose/event-monitor-pdm
+  license: Apache-2.0
