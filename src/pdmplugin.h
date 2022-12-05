@@ -16,7 +16,22 @@
 
 #pragma once
 
+#include <set>
+#include <unordered_map>
+
 #include <event-monitor-api/pluginbase.hpp>
+
+typedef struct Drive {
+    std::string driveName;
+    std::string driveStatus;
+} Drive;
+
+typedef struct Device {
+    std::string deviceType;
+    std::string deviceNumber;
+    std::string deviceStatus;
+    std::set<Drive> drives;
+} Device;
 
 class PdmPlugin: public EventMonitor::PluginBase {
 public:
@@ -28,8 +43,15 @@ public:
 private:
     void attachedDeviceStatusCallback(pbnjson::JValue &previousValue,
             pbnjson::JValue &value);
+    void attachedStorageDevicesStatusCallback(pbnjson::JValue &previousValue,
+            pbnjson::JValue &value);
+    void attachedNonStorageDevicesCallback(pbnjson::JValue &previousValue,
+            pbnjson::JValue &value);
     void blockToasts(unsigned int timeMs);
+    void getDeviceTypeString(std::string &text, std::string &deviceType);
+    void getToastText(std::string &text, std::string deviceType,
+            std::string deviceStatus);
 private:
-    //for ethernet toast
     bool toastsBlocked;
+    std::unordered_map<int, Device> mDevices; //deviceNum to device
 };
