@@ -16,22 +16,14 @@
 
 #pragma once
 
-#include <set>
-#include <unordered_map>
+#include "PdmUtils.h"
 
 #include <event-monitor-api/pluginbase.hpp>
 
-typedef struct Drive {
-    std::string driveName;
-    std::string driveStatus;
-} Drive;
+#include <set>
+#include <unordered_map>
 
-typedef struct Device {
-    std::string deviceType;
-    std::string deviceNumber;
-    std::string deviceStatus;
-    std::set<Drive> drives;
-} Device;
+using namespace PdmUtils;
 
 class PdmPlugin: public EventMonitor::PluginBase {
 public:
@@ -43,15 +35,14 @@ public:
 private:
     void attachedDeviceStatusCallback(pbnjson::JValue &previousValue,
             pbnjson::JValue &value);
-    void attachedStorageDevicesStatusCallback(pbnjson::JValue &previousValue,
+    void attachedStorageDeviceListCallback(pbnjson::JValue &previousValue,
             pbnjson::JValue &value);
-    void attachedNonStorageDevicesCallback(pbnjson::JValue &previousValue,
+    void attachedNonStorageDeviceListCallback(pbnjson::JValue &previousValue,
             pbnjson::JValue &value);
     void blockToasts(unsigned int timeMs);
-    void getDeviceTypeString(std::string &text, std::string &deviceType);
-    void getToastText(std::string &text, std::string deviceType,
-            std::string deviceStatus);
+    void handleEvent(Event event);
 private:
     bool toastsBlocked;
-    std::unordered_map<int, Device> mDevices; //deviceNum to device
+    std::unordered_map<int, Device> mStorageDevices;
+    std::unordered_map<int, Device> mNonStorageDevices;
 };

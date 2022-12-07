@@ -15,7 +15,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "pdmplugin.h"
-
 #include "config.h"
 #include "logging.h"
 #include "errors.h"
@@ -35,19 +34,7 @@ static const std::string PDM_ATTACHED_NONSTORAGE_DEVICES_QUERY = "luna://com.web
 //notification Icons
 const std::string DEVICE_CONNECTED_ICON_PATH = "/usr/share/physical-device-manager/usb_connect.png";
 
-//Alert IDs
-const std::string ALERT_ID_USB_STORAGE_DEV_REMOVED = "usbStorageDevRemoved";
-const std::string ALERT_ID_USB_STORAGE_DEV_UNSUPPORTED_FS = "usbStorageDevUnsupportedFs";
-const std::string ALERT_ID_USB_MAX_STORAGE_DEVCIES = "usbMaxStorageDevices";
-const std::string ALERT_ID_USB_STORAGE_FSCK_TIME_OUT = "usbStorageDevicesFsckTimeOut";
-
-// Alert strings
-const std::string ALERT_STRING_USB_STORAGE_DEV_UNSUPPORTED_FS = "This USB storage has an unsupported system and cannot be read.";
-
 static const unsigned int TOAST_BOOT_BLOCK_TIME_MS = 7000;
-static const unsigned int TOAST_RESUME_BLOCK_TIME_MS = 5000;
-static const unsigned int TOAST_SUSPEND_BLOCK_TIME_MS = 5000;
-
 
 const char *requiredServices[] = {"com.webos.service.pdm",
                                   nullptr
@@ -76,162 +63,6 @@ PdmPlugin::~PdmPlugin()
 {
 }
 
-void PdmPlugin::attachedDeviceStatusCallback(JValue &previousValue, JValue &value)
-{
-    LOG_INFO(MSGID_PDM_PLUGIN_INFO, 0, "attachedDeviceStatusCallback");
-
-    if (previousValue.isNull()) {
-        LOG_DEBUG("%s previousValue null", __FUNCTION__);
-        return;
-    }
-
-    if (value.isNull()) {
-        LOG_DEBUG("%s value null", __FUNCTION__);
-        return;
-    }
-
-    if (!value.hasKey("deviceStatusList"))
-        return;
-
-    JValue deviceStatusListObj = Array();
-    deviceStatusListObj = value["deviceStatusList"];
-    int deviceStatusListObjLength = deviceStatusListObj.arraySize();
-
-    for (auto i = 0; i < deviceStatusListObjLength; i++)
-    {
-        if (!deviceStatusListObj[i].hasKey("deviceNum"))
-            continue;
-
-        auto deviceNum = deviceStatusListObj[i]["deviceNum"].asNumber<int>();
-        LOG_DEBUG("%s deviceNum: %d", __FUNCTION__, deviceNum);
-
-        if (!deviceStatusListObj[i].hasKey("deviceStatus"))
-            continue;
-
-        auto deviceStatus = deviceStatusListObj[i]["deviceStatus"].asString();
-        LOG_DEBUG("%s deviceNum: %s", __FUNCTION__, deviceStatus);
-
-        if (!deviceStatusListObj[i].hasKey("deviceType"))
-            continue;
-
-        auto deviceType = deviceStatusListObj[i]["deviceType"].asString();
-        LOG_DEBUG("%s deviceType: %s", __FUNCTION__, deviceType);
-
-        if (!deviceStatusListObj[i].hasKey("driveStatusList")) {
-
-            JValue driveStatusListObj = Array();
-            driveStatusListObj = deviceStatusListObj[i]["driveStatusList"];
-            int driveStatusListObjLength = driveStatusListObj.arraySize();
-
-            for (auto j = 0; j < driveStatusListObjLength; j++)
-            {
-                if (!driveStatusListObj[j].hasKey("driveName"))
-                            continue;
-                auto driveName = deviceStatusListObj[i]["driveName"].asString();
-                LOG_DEBUG("%s driveName: %s", __FUNCTION__, driveName);
-
-                if (!driveStatusListObj[j].hasKey("driveStatus"))
-                            continue;
-                auto driveStatus = deviceStatusListObj[i]["driveStatus"].asString();
-                LOG_DEBUG("%s driveStatus: %s", __FUNCTION__, driveStatus);
-            }
-        }
-        //TODO: Check is device added. removed or status changed and then create notification
-        std::string message;
-        getToastText(message, deviceType, deviceStatus);
-        this->manager->createToast(
-                this->getLocString(message),
-                DEVICE_CONNECTED_ICON_PATH);
-    }
-}
-
-void PdmPlugin::attachedStorageDevicesStatusCallback(pbnjson::JValue &previousValue,
-                           pbnjson::JValue &value) {
-    LOG_INFO(MSGID_PDM_PLUGIN_INFO, 0, "attachedStorageDevicesStatusCallback");
-
-    if (previousValue.isNull()) {
-        LOG_DEBUG("%s previousValue null", __FUNCTION__);
-        return;
-    }
-
-    if (value.isNull()) {
-        LOG_DEBUG("%s value null", __FUNCTION__);
-        return;
-    }
-
-    if (!value.hasKey("storageDeviceList"))
-        return;
-
-    JValue storageDeviceListObj = Array();
-    storageDeviceListObj = value["storageDeviceList"];
-    int storageDeviceListObjLength = storageDeviceListObj.arraySize();
-
-    for (auto i = 0; i < storageDeviceListObjLength; i++)
-    {
-        if (!storageDeviceListObj[i].hasKey("deviceNum"))
-            continue;
-
-        auto deviceNum = storageDeviceListObj[i]["deviceNum"].asNumber<int>();
-        LOG_DEBUG("%s deviceNum: %d", __FUNCTION__, deviceNum);
-
-        if (!storageDeviceListObj[i].hasKey("deviceType"))
-            continue;
-
-        auto deviceType = storageDeviceListObj[i]["deviceType"].asString();
-        LOG_DEBUG("%s deviceType: %s", __FUNCTION__, deviceType);
-
-        //TODO: Check is device added. removed or status changed and then create notification
-        std::string message;
-        getToastText(message, deviceType, deviceType + " is connected");
-        this->manager->createToast(
-                this->getLocString(message),
-                DEVICE_CONNECTED_ICON_PATH);
-    }
-}
-void PdmPlugin::attachedNonStorageDevicesCallback(pbnjson::JValue &previousValue,
-                           pbnjson::JValue &value) {
-    LOG_INFO(MSGID_PDM_PLUGIN_INFO, 0, "attachedNonStorageDevicesCallback");
-
-    if (previousValue.isNull()) {
-        LOG_DEBUG("%s previousValue null", __FUNCTION__);
-        return;
-    }
-
-    if (value.isNull()) {
-        LOG_DEBUG("%s value null", __FUNCTION__);
-        return;
-    }
-
-    if (!value.hasKey("nonStorageDeviceList"))
-        return;
-
-    JValue nonStorageDeviceListObj = Array();
-    nonStorageDeviceListObj = value["deviceStatusList"];
-    int nonStorageDeviceListObjLength = nonStorageDeviceListObj.arraySize();
-
-    for (auto i = 0; i < nonStorageDeviceListObjLength; i++)
-    {
-        if (!nonStorageDeviceListObj[i].hasKey("deviceNum"))
-            continue;
-
-        auto deviceNum = nonStorageDeviceListObj[i]["deviceNum"].asNumber<int>();
-        LOG_DEBUG("%s deviceNum: %d", __FUNCTION__, deviceNum);
-
-        if (!nonStorageDeviceListObj[i].hasKey("deviceType"))
-            continue;
-
-        auto deviceType = nonStorageDeviceListObj[i]["deviceType"].asString();
-        LOG_DEBUG("%s deviceType: %s", __FUNCTION__, deviceType);
-
-        //TODO: Check is device added. removed or status changed and then create notification
-        std::string message;
-        getToastText(message, deviceType, deviceType + " is connected");
-        this->manager->createToast(
-                this->getLocString(message),
-                DEVICE_CONNECTED_ICON_PATH);
-    }
-}
-
 void PdmPlugin::blockToasts(unsigned int timeMs)
 {
 	this->toastsBlocked = true;
@@ -256,22 +87,26 @@ void PdmPlugin::startMonitoring()
     JValue params = JObject {{}};
 
     this->manager->subscribeToMethod(
-        "pdm",
+        "attachedDevices",
         PDM_ATTACHED_DEVICES_QUERY,
         params,
         std::bind(&PdmPlugin::attachedDeviceStatusCallback, this,
                   std::placeholders::_1, std::placeholders::_2));
+
+    JValue params2 = JObject {{}};
     this->manager->subscribeToMethod(
-        "pdm",
+        "attachedStorageDeviceList",
         PDM_ATTACHED_STORAGE_DEVICES_QUERY,
-        params,
-        std::bind(&PdmPlugin::attachedStorageDevicesStatusCallback, this,
+        params2,
+        std::bind(&PdmPlugin::attachedStorageDeviceListCallback, this,
                   std::placeholders::_1, std::placeholders::_2));
+
+    JValue params3 = JObject {{}};
     this->manager->subscribeToMethod(
-        "pdm",
+        "attachedNonStorageDeviceList",
         PDM_ATTACHED_NONSTORAGE_DEVICES_QUERY,
-        params,
-        std::bind(&PdmPlugin::attachedNonStorageDevicesCallback, this,
+        params3,
+        std::bind(&PdmPlugin::attachedNonStorageDeviceListCallback, this,
                   std::placeholders::_1, std::placeholders::_2));
 }
 
@@ -281,25 +116,241 @@ EventMonitor::UnloadResult PdmPlugin::stopMonitoring(
 	return UNLOAD_OK;
 }
 
-void PdmPlugin::getDeviceTypeString(std::string& text, std::string& deviceType) {
+void PdmPlugin::attachedDeviceStatusCallback(JValue &previousValue, JValue &value)
+{
+    LOG_DEBUG("%s", __FUNCTION__);
 
-    if(0 == deviceType.compare("BLUETOOTH")) {
-        text = "Bluetooth device";
-    } else if(0 == deviceType.compare("HID")) {
-        text = "HID device";
-    } else if(0 == deviceType.compare("SOUND")) {
-        text = "Audio device";
-    } else if(0 == deviceType.compare("USB_STORAGE")) {
-        text = "USB device";
+    if (!this->toastsBlocked) {
+        if (previousValue.isNull()) {
+            LOG_DEBUG("%s previousValue null", __FUNCTION__);
+//        return;
+        } else {
+            LOG_DEBUG("%s previousValue: %s", __FUNCTION__, previousValue.stringify().c_str());
+        }
+
+        if (value.isNull()) {
+            LOG_DEBUG("%s value null", __FUNCTION__);
+            return;
+        } else {
+            LOG_DEBUG("%s value: %s", __FUNCTION__, value.stringify().c_str());
+        }
+
+        if (!value.hasKey("deviceStatusList"))
+            return;
+
+        Event event;
+        event.type = EventType::ATTACHED_DEVICE_STATUS_LIST;
+
+        JValue deviceStatusListObj = Array();
+        deviceStatusListObj = value["deviceStatusList"];
+        int deviceStatusListObjLength = deviceStatusListObj.arraySize();
+
+        for (auto i = 0; i < deviceStatusListObjLength; i++) {
+            Device device;
+            if (!deviceStatusListObj[i].hasKey("deviceNum"))
+                continue;
+
+            auto deviceNum =
+                    deviceStatusListObj[i]["deviceNum"].asNumber<int>();
+            LOG_DEBUG("%s deviceNum: %d", __FUNCTION__, deviceNum);
+            device.deviceNumber = deviceNum;
+
+            if (!deviceStatusListObj[i].hasKey("deviceStatus"))
+                continue;
+
+            auto deviceStatus =
+                    deviceStatusListObj[i]["deviceStatus"].asString();
+            LOG_DEBUG("%s deviceStatus: %s", __FUNCTION__, deviceStatus);
+            device.deviceStatus = deviceStatus;
+
+            if (!deviceStatusListObj[i].hasKey("deviceType"))
+                continue;
+
+            auto deviceType = deviceStatusListObj[i]["deviceType"].asString();
+            LOG_DEBUG("%s deviceType: %s", __FUNCTION__, deviceType);
+            device.deviceType = deviceType;
+            event.devices.push_back(device);
+            event.deviceNums.insert(deviceNum);
+        }
+        handleEvent(event);
     } else {
-        text = "Unknown device";
+        LOG_DEBUG("%s toast is blocked now", __FUNCTION__);
     }
 }
 
-void PdmPlugin::getToastText(std::string& text, std::string deviceType, std::string deviceStatus)
-{
-    LOG_DEBUG("%s ", __FUNCTION__);
+void PdmPlugin::attachedStorageDeviceListCallback(pbnjson::JValue &previousValue,
+                           pbnjson::JValue &value) {
+    LOG_DEBUG("%s", __FUNCTION__);
 
-    getDeviceTypeString(text, deviceType);
-    text += (" is " + deviceStatus);
+    if (!this->toastsBlocked) {
+        if (previousValue.isNull()) {
+            LOG_DEBUG("%s previousValue null", __FUNCTION__);
+//        return;
+        } else {
+            LOG_DEBUG("%s previousValue: %s", __FUNCTION__, previousValue.stringify().c_str());
+        }
+
+        if (value.isNull()) {
+            LOG_DEBUG("%s value null", __FUNCTION__);
+            return;
+        } else {
+            LOG_DEBUG("%s value: %s", __FUNCTION__, value.stringify().c_str());
+        }
+
+        if (!value.hasKey("storageDeviceList"))
+            return;
+
+        Event event;
+        event.type = EventType::ATTACHED_STORAGE_DEVICE_LIST;
+
+        JValue storageDeviceListObj = Array();
+        storageDeviceListObj = value["storageDeviceList"];
+        int storageDeviceListObjLength = storageDeviceListObj.arraySize();
+
+        for (auto i = 0; i < storageDeviceListObjLength; i++) {
+            Device device;
+            if (!storageDeviceListObj[i].hasKey("deviceNum"))
+                continue;
+
+            auto deviceNum =
+                    storageDeviceListObj[i]["deviceNum"].asNumber<int>();
+            device.deviceNumber = deviceNum;
+            LOG_DEBUG("%s deviceNum: %d", __FUNCTION__, deviceNum);
+
+            if (!storageDeviceListObj[i].hasKey("deviceType"))
+                continue;
+
+            auto deviceType = storageDeviceListObj[i]["deviceType"].asString();
+            device.deviceType = deviceType;
+            LOG_DEBUG("%s deviceType: %s", __FUNCTION__, deviceType);
+            event.devices.push_back(device);
+            event.deviceNums.insert(deviceNum);
+        }
+        handleEvent(event);
+    } else {
+        LOG_DEBUG("%s toast is blocked now", __FUNCTION__);
+    }
+}
+
+void PdmPlugin::attachedNonStorageDeviceListCallback(pbnjson::JValue &previousValue,
+                           pbnjson::JValue &value) {
+    LOG_DEBUG("%s", __FUNCTION__);
+
+    if (!this->toastsBlocked) {
+        if (previousValue.isNull()) {
+            LOG_DEBUG("%s previousValue null", __FUNCTION__);
+//        return;
+        } else {
+            LOG_DEBUG("%s previousValue: %s", __FUNCTION__, previousValue.stringify().c_str());
+        }
+
+        if (value.isNull()) {
+            LOG_DEBUG("%s value null", __FUNCTION__);
+            return;
+        } else {
+            LOG_DEBUG("%s value: %s", __FUNCTION__, value.stringify().c_str());
+        }
+
+        if (!value.hasKey("nonStorageDeviceList"))
+            return;
+
+        Event event;
+        event.type = EventType::ATTACHED_NONSTORAGE_DEVICE_LIST;
+
+        JValue nonStorageDeviceListObj = Array();
+        nonStorageDeviceListObj = value["nonStorageDeviceList"];
+        int nonStorageDeviceListObjLength = nonStorageDeviceListObj.arraySize();
+
+        for (auto i = 0; i < nonStorageDeviceListObjLength; i++) {
+            Device device;
+            if (!nonStorageDeviceListObj[i].hasKey("deviceNum"))
+                continue;
+
+            auto deviceNum = nonStorageDeviceListObj[i]["deviceNum"].asNumber<
+                    int>();
+            device.deviceNumber = deviceNum;
+            LOG_DEBUG("%s deviceNum: %d", __FUNCTION__, deviceNum);
+
+            if (!nonStorageDeviceListObj[i].hasKey("deviceType"))
+                continue;
+
+            auto deviceType =
+                    nonStorageDeviceListObj[i]["deviceType"].asString();
+            device.deviceType = deviceType;
+            LOG_DEBUG("%s deviceType: %s", __FUNCTION__, deviceType);
+            event.devices.push_back(device);
+            event.deviceNums.insert(deviceNum);
+        }
+        handleEvent(event);
+    } else {
+        LOG_DEBUG("%s toast is blocked now", __FUNCTION__);
+    }
+}
+
+void PdmPlugin::handleEvent(Event event) {
+    LOG_DEBUG("%s", __FUNCTION__);
+
+    if(event.type == EventType::ATTACHED_DEVICE_STATUS_LIST) {
+        //TODO: Handle it for fsck operations
+        return;
+    }
+
+    auto &mDevices = mStorageDevices;
+    if(event.type == EventType::ATTACHED_NONSTORAGE_DEVICE_LIST) {
+        mDevices = mNonStorageDevices;
+    }
+    for(auto& device: event.devices) {
+        auto foundDevice = mDevices.find (device.deviceNumber);
+        if (foundDevice != mDevices.end()) {
+            LOG_DEBUG("%s device entry found for deviceNum %d", __FUNCTION__, device.deviceNumber);
+            //Check for change in state
+            if(foundDevice->second.deviceState == device.deviceState) {
+                //No action as state has not changed.
+                LOG_DEBUG("%s deviceNum %d has no change in state", __FUNCTION__, device.deviceNumber);
+            } else {
+                //TODO: Handle fsck related state changes
+                LOG_DEBUG("%s deviceNum %d handle fsck", __FUNCTION__, device.deviceNumber);
+            }
+        } else {
+            //New device entry
+            LOG_DEBUG("%s deviceNum %d new entry", __FUNCTION__, device.deviceNumber);
+            mDevices.insert ({device.deviceNumber, device});
+            //Send Connected Toast
+            std::string message;
+            getToastText(message, device.deviceType, "connnnected.........");
+            this->manager->createToast(message, //TODO: Use localization
+                    DEVICE_CONNECTED_ICON_PATH);
+        }
+    }
+    if(event.devices.empty()) {
+        //All connected devices are removed or no connected device exists so send Disconnected toast for all devices
+        LOG_DEBUG("%s All connected devices are removed or no connected device exists", __FUNCTION__);
+        for (auto device : mDevices) {
+            std::string message;
+            getToastText(message, device.second.deviceType, "disconnected");
+            this->manager->createToast(message,  //TODO: Use localization
+                    DEVICE_CONNECTED_ICON_PATH);
+        }
+        mDevices.clear();
+    } else {
+        //Check if any devices are removed/disconnected
+        LOG_DEBUG("%s Check if any devices are removed/disconnected", __FUNCTION__);
+        auto it = mDevices.cbegin();
+        while (it != mDevices.cend())
+        {
+            if (event.deviceNums.find(it->first) == event.deviceNums.cend())
+            {
+                LOG_DEBUG("%s deviceNum %d Device has been disconnected", __FUNCTION__, it->first);
+                //Device has been disconnected
+                std::string message;
+                getToastText(message, it->second.deviceType, "disconnnnected....");
+                this->manager->createToast(message,  //TODO: Use localization
+                        DEVICE_CONNECTED_ICON_PATH);
+                it = mDevices.erase(it);
+            }
+            else {
+                ++it;
+            }
+        }
+    }
 }
