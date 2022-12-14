@@ -41,6 +41,8 @@ private:
             pbnjson::JValue &value);
     void blockToasts(unsigned int timeMs);
     void handleEvent(Event event);
+    void saveAlreadyConnectedDeviceList(pbnjson::JValue &previousValue,
+            pbnjson::JValue &value, EventType);
 private:
     bool toastsBlocked;
     std::unordered_map<int, Device> mStorageDevices;

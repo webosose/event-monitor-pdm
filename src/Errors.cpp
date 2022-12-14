@@ -14,8 +14,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include "Errors.h"
+
 #include <unordered_map>
-#include "errors.h"
 
 static std::unordered_map<int, const char*> errorTexts = { {
         ALERT_CLOSE_INVALID_ACTION, "Invalid action" } };
