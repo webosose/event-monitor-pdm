@@ -1,0 +1,22 @@
+{
+	"After removing, please reconnect the usb device.": "Débranchez puis reconnectez le périphérique USB.",
+	"Exceeded maximum number of allowable USB storage. You can connect up to 6 USB storages to your device": "Dépassement du nombre maximal de périphériques de stockage USB autorisé. Vous pouvez connecter jusqu’à 6 périphériques de stockage USB à votre téléviseur.",
+	"Formatting is required to use this USB storage. Do you want to go to the input list to format the USB?": "Ce périphérique de stockage USB doit être formaté. Voulez-vous accéder à la liste des sources pour le formater?",
+	"Formatting {DRIVE} has been successfully completed.": "Le formatage de {DRIVE} a été effectué avec succès.",
+	"Formatting {DRIVE} has not been successfully completed.": "Le formatage de {DRIVE} n’a pas été effectué avec succès.",
+	"HID device is connected.": "L’appareil HID est connecté.",
+	"HID device is disconnected.": "L’appareil HID est déconnecté.",
+	"MTP device is connected.": "L’appareil MTP est connecté.",
+	"MTP device is disconnected.": "L’appareil MTP est déconnecté.",
+	"PTP device is disconnected.": "L’appareil PTP est déconnecté.",
+	"Some files may not be recognizable. Do you want to open {DEVICE} now?": "Certains fichiers peuvent ne pas être identifiables. Désirez-vous ouvrir {DEVICE} maintenant?",
+	"Storage device is connected.": "Le dispositif de stockage est connecté.",
+	"Storage device is disconnected.": "Le dispositif de stockage est déconnecté.",
+	"This USB storage has an unsupported system and cannot be read.": "Ce périphérique de stockage USB comporte un système non pris en charge et il ne peut pas être lu.",
+	"USB device is connected.": "Le périphérique USB est connecté.",
+	"USB device is disconnected.": "Le périphérique USB est déconnecté.",
+	"Unknown device is connected.": "Un périphérique inconnu est connecté.",
+	"Unknown device is disconnected.": "Un périphérique inconnu est déconnecté.",
+	"XPAD device is connected.": "L’appareil XPAD est connecté.",
+	"XPAD device is disconnected.": "L’appareil XPAD est déconnecté."
+}

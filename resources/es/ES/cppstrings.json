@@ -1,0 +1,13 @@
+{
+	"After removing, please reconnect the usb device.": "Quite el dispositivo USB y vuelva a conectarlo.",
+	"Check & Repair": "Comprobar y reparar",
+	"Exceeded maximum number of allowable USB storage. You can connect up to 6 USB storages to your device": "Se ha superado el número máximo de almacenamiento USB permitido. Puede conectar hasta 6 almacenamientos USB a su dispositivo",
+	"Formatting is required to use this USB storage. Do you want to go to the input list to format the USB?": "Es necesario formatear para usar este almacenamiento USB. ¿Desea ir a la lista de entradas para formatear el USB?",
+	"Formatting {DRIVE} has been successfully completed.": "El formateo de {DRIVE} se ha completado correctamente.",
+	"Formatting {DRIVE} has not been successfully completed.": "El formateo de {DRIVE} no se ha completado correctamente.",
+	"Open Now": "Abrir ahora",
+	"Some files may not be recognizable. Do you want to open {DEVICE} now?": "Algunos archivos podrían no ser reconocibles. ¿Desea abrir {DEVICE} ahora?",
+	"This USB storage has an unsupported system and cannot be read.": "Este almacenamiento USB tiene un sistema no compatible y no puede leerse.",
+	"USB device is disconnected.": "El dispositivo USB está desconectado.",
+	"Unknown device is disconnected.": "Un dispositivo desconocido está desconectado."
+}
