@@ -18,6 +18,7 @@
 
 #include <unordered_set>
 #include <vector>
+#include <string>
 
 namespace PdmUtils {
 static const char *STORAGE_DEVICE_CONNECTED = "Storage device is connected.";
