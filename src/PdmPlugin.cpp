@@ -86,15 +86,13 @@ void PdmPlugin::startMonitoring() {
             std::bind(&PdmPlugin::attachedDeviceStatusCallback, this,
                     std::placeholders::_1, std::placeholders::_2));
 
-    JValue params2 = JObject { { } };
     this->manager->subscribeToMethod("attachedStorageDeviceList",
-            PDM_ATTACHED_STORAGE_DEVICES_QUERY, params2,
+            PDM_ATTACHED_STORAGE_DEVICES_QUERY, params,
             std::bind(&PdmPlugin::attachedStorageDeviceListCallback, this,
                     std::placeholders::_1, std::placeholders::_2));
 
-    JValue params3 = JObject { { } };
     this->manager->subscribeToMethod("attachedNonStorageDeviceList",
-            PDM_ATTACHED_NONSTORAGE_DEVICES_QUERY, params3,
+            PDM_ATTACHED_NONSTORAGE_DEVICES_QUERY, params,
             std::bind(&PdmPlugin::attachedNonStorageDeviceListCallback, this,
                     std::placeholders::_1, std::placeholders::_2));
 }
@@ -450,7 +448,7 @@ void PdmPlugin::saveAlreadyConnectedDeviceList(pbnjson::JValue &previousValue,
                 break;
             }
             default: {
-                LOG_DEBUG("%s Unknown event type", __FUNCTION__,
+                LOG_DEBUG("%s Unknown event type %s", __FUNCTION__,
                         value.stringify().c_str());
             }
             }

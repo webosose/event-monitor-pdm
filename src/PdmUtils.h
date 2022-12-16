@@ -122,6 +122,16 @@ void getDeviceTypeString(std::string &text, std::string &deviceType) {
         text = "Sound device";
     } else if (0 == deviceType.compare("USB_STORAGE")) {
         text = "Storage device";
+    } else if (0 == deviceType.compare("CAM")) {
+        text = "Camera device";
+    } else if (0 == deviceType.compare("XPAD")) {
+        text = "XPAD device";
+    } else if (0 == deviceType.compare("MTP")) {
+        text = "MTP device";
+    } else if (0 == deviceType.compare("PTP")) {
+        text = "PTP device";
+    } else if (0 == deviceType.compare("CDC")) {
+        text = "USB device";
     } else {
         text = "Unknown device";
     }
