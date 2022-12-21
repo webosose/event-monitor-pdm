@@ -43,8 +43,13 @@ private:
     void handleEvent(Event event);
     void saveAlreadyConnectedDeviceList(pbnjson::JValue &previousValue,
             pbnjson::JValue &value, EventType);
+    void processNewEntries(std::set<int> &deviceNums,
+            std::unordered_multimap<int, Device> &newDevices,
+            std::unordered_map<int, Device> &mCurrentDevices);
+    void getProperDeviceType(std::string &current, std::string received);
 private:
     bool toastsBlocked;
     std::unordered_map<int, Device> mStorageDevices;
     std::unordered_map<int, Device> mNonStorageDevices;
+    std::unordered_multimap<int, Device> mNewDevices;
 };
