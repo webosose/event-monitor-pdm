@@ -314,17 +314,13 @@ void PdmPlugin::handleEvent(Event event) {
             LOG_DEBUG("%s deviceNum %d new entry", __FUNCTION__,
                     device.deviceNumber);
             mDevices.insert( { device.deviceNumber, device });
-            //TODO: Remove the below check once all toast changes are available
-            if ((device.deviceType.compare("HID") == 0)
-                    || (device.deviceType.compare("USB_STORAGE") == 0)) {
-                //Send Connected Toast
-                std::string message;
-                getToastText(message, device.deviceType, "connected.");
-                LOG_DEBUG("%s sending toast for connected devicenumber: %d",
-                        __FUNCTION__, device.deviceNumber);
-                this->manager->createToast(message, //TODO: Use localization
-                        DEVICE_CONNECTED_ICON_PATH);
-            }
+            //Send Connected Toast
+            std::string message;
+            getToastText(message, device.deviceType, "connected.");
+            LOG_DEBUG("%s sending toast for connected devicenumber: %d",
+                    __FUNCTION__, device.deviceNumber);
+            this->manager->createToast(message, //TODO: Use localization
+                    DEVICE_CONNECTED_ICON_PATH);
         }
     }
     if (event.devices.empty()) {
@@ -333,17 +329,13 @@ void PdmPlugin::handleEvent(Event event) {
                 "%s All connected devices are removed or no connected device exists",
                 __FUNCTION__);
         for (auto device : mDevices) {
-            //TODO: Remove the below check once all toast changes are available
-            if ((device.second.deviceType.compare("HID") == 0)
-                    || (device.second.deviceType.compare("USB_STORAGE") == 0)) {
-                std::string message;
-                getToastText(message, device.second.deviceType,
-                        "disconnected.");
-                LOG_DEBUG("%s sending toast for disconnected device num: %d",
-                        __FUNCTION__, device.second.deviceNumber);
-                this->manager->createToast(message,  //TODO: Use localization
-                        DEVICE_CONNECTED_ICON_PATH);
-            }
+            std::string message;
+            getToastText(message, device.second.deviceType,
+                    "disconnected.");
+            LOG_DEBUG("%s sending toast for disconnected device num: %d",
+                    __FUNCTION__, device.second.deviceNumber);
+            this->manager->createToast(message,  //TODO: Use localization
+                    DEVICE_CONNECTED_ICON_PATH);
         }
         mDevices.clear();
     } else {
@@ -355,20 +347,15 @@ void PdmPlugin::handleEvent(Event event) {
             if (event.deviceNums.find(it->first) == event.deviceNums.cend()) {
                 LOG_DEBUG("%s deviceNum %d device has been disconnected",
                         __FUNCTION__, it->first);
-                //TODO: Remove the below check once all toast changes are available
-                if ((it->second.deviceType.compare("HID") == 0)
-                        || (it->second.deviceType.compare("USB_STORAGE") == 0))
-                {
-                    //Device has been disconnected
-                    std::string message;
-                    getToastText(message, it->second.deviceType,
-                            "disconnected.");
-                    LOG_DEBUG(
-                            "%s sending toast for disconnected devicenumber: %d",
-                            __FUNCTION__, it->second.deviceNumber);
-                    this->manager->createToast(message, //TODO: Use localization
-                            DEVICE_CONNECTED_ICON_PATH);
-                }
+                //Device has been disconnected
+                std::string message;
+                getToastText(message, it->second.deviceType,
+                        "disconnected.");
+                LOG_DEBUG(
+                        "%s sending toast for disconnected devicenumber: %d",
+                        __FUNCTION__, it->second.deviceNumber);
+                this->manager->createToast(message, //TODO: Use localization
+                        DEVICE_CONNECTED_ICON_PATH);
                 it = mDevices.erase(it);
             } else {
                 ++it;
