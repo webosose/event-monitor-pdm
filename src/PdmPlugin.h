@@ -46,7 +46,7 @@ private:
     void processNewEntries(std::set<int> &deviceNums,
             std::unordered_multimap<int, Device> &newDevices,
             std::unordered_map<int, Device> &mCurrentDevices);
-    void getProperDeviceType(std::string &current, std::string received);
+    std::string getDeviceType(std::string current, std::string received);
 private:
     bool toastsBlocked;
     std::unordered_map<int, Device> mStorageDevices;

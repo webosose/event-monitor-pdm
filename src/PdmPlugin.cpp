@@ -276,7 +276,7 @@ void PdmPlugin::attachedNonStorageDeviceListCallback(
             auto deviceType =
                     nonStorageDeviceListObj[i]["deviceType"].asString();
             device.deviceType = deviceType;
-            LOG_DEBUG("%s deviceType: %s", __FUNCTION__, deviceType);
+            LOG_DEBUG("%s deviceType: %s", __FUNCTION__, device.deviceType);
             event.devices.push_back(device);
             event.deviceNums.insert(deviceNum);
         }
@@ -372,31 +372,22 @@ void PdmPlugin::processNewEntries(std::set<int> &deviceNums,
     for (auto x : deviceNums) {
         auto count = newDevices.count(x);
         LOG_DEBUG("%s deviceNum %d count %d ", __FUNCTION__, x, count);
-        std::string deviceType;
-        switch (count) {
-        case 0: {
-            break;
-        }
-        case 1: {
-            //Single entry display the toast
-            break;
-        }
-        default: {
-            //Two entries display the toast
-            auto range = newDevices.equal_range(1);
-            for (auto it = range.first; it != range.second; ++it) {
-                this->getProperDeviceType(deviceType, it->second.deviceType);
-                LOG_DEBUG("%s proper deviceType: %s", __FUNCTION__,
-                        deviceType.c_str());
-            }
-            break;
-        }
-        }
 
         if (count) {
             Device device = newDevices.find(x)->second;
-            if (!deviceType.empty())
+            //If count is 1, then deviceType is always proper
+            if (count >= 2) {
+                auto range = newDevices.equal_range(device.deviceNumber);
+                std::string deviceType;
+                for (auto it = range.first; it != range.second; ++it) {
+                    deviceType = getDeviceType(deviceType,
+                            it->second.deviceType);
+                }
                 device.deviceType = deviceType;
+                LOG_DEBUG("%s actual deviceType: %s", __FUNCTION__,
+                        deviceType.c_str());
+            }
+
             LOG_DEBUG("%s updated deviceType: %s", __FUNCTION__,
                     device.deviceType.c_str());
             mDevices.insert( { device.deviceNumber, device }); //save device entry
@@ -406,26 +397,28 @@ void PdmPlugin::processNewEntries(std::set<int> &deviceNums,
             LOG_DEBUG(
                     "%s sending toast for connected devicenumber: %d type: %s msg: %s",
                     __FUNCTION__, device.deviceNumber,
-                    device.deviceType.c_str(), message.c_str());
+                    device.deviceType.c_str(), message);
             this->manager->createToast(message, //TODO: Use localization
                     DEVICE_CONNECTED_ICON_PATH);
         }
     }
     newDevices.clear();
-    /*    std::for_each(deviceNums.cbegin(), deviceNums.cend(),
-     [this, &newDevices, &mCurrentDevices](int x) {});*/
 }
 
-void PdmPlugin::getProperDeviceType(std::string &current,
+std::string PdmPlugin::getDeviceType(std::string current,
         std::string received) {
     LOG_DEBUG("%s current: %s received: %s", __FUNCTION__, current, received);
-    if (current.empty() && !received.empty()) {
+    if (current.empty()) {
         current = received;
     } else if ((0 == current.compare("HID"))
             && (0 != received.compare("HID"))) {
         current = received;
+    } else if ((0 == current.compare("SOUND"))
+            && (0 == received.compare("CAM"))) {
+        current = received;
     }
     LOG_DEBUG("%s new current: %s", __FUNCTION__, current);
+    return current;
 }
 
 void PdmPlugin::saveAlreadyConnectedDeviceList(pbnjson::JValue &previousValue,
@@ -467,13 +460,15 @@ void PdmPlugin::saveAlreadyConnectedDeviceList(pbnjson::JValue &previousValue,
                     LOG_DEBUG("%s deviceType: %s", __FUNCTION__, deviceType);
                     auto found = mNonStorageDevices.find(deviceNum);
                     if (found != mNonStorageDevices.end()) {
-                        getProperDeviceType(found->second.deviceType,
-                                device.deviceType);
+                        found->second.deviceType = getDeviceType(
+                                found->second.deviceType, device.deviceType);
                         LOG_DEBUG("%s proper deviceType: %s", __FUNCTION__,
-                                found->second.deviceType.c_str());
+                                found->second.deviceType);
                     } else {
                         mNonStorageDevices.insert(
                                 { device.deviceNumber, device });
+                        LOG_DEBUG("%s new deviceType: %s", __FUNCTION__,
+                                device.deviceType);
                     }
                 }
                 break;
@@ -506,10 +501,10 @@ void PdmPlugin::saveAlreadyConnectedDeviceList(pbnjson::JValue &previousValue,
 
                     auto found = mStorageDevices.find(deviceNum);
                     if (found != mStorageDevices.end()) {
-                        getProperDeviceType(found->second.deviceType,
-                                device.deviceType);
+                        found->second.deviceType = getDeviceType(
+                                found->second.deviceType, device.deviceType);
                         LOG_DEBUG("%s proper deviceType: %s", __FUNCTION__,
-                                found->second.deviceType.c_str());
+                                found->second.deviceType);
                     } else {
                         mStorageDevices.insert(
                                 { device.deviceNumber, device });
