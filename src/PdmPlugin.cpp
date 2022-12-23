@@ -56,9 +56,38 @@ EventMonitor::Plugin* instantiatePlugin(int version,
 
 PdmPlugin::PdmPlugin(Manager *_manager) :
         PluginBase(_manager, WEBOS_LOCALIZATION_PATH), toastsBlocked(false) {
+    struct sigaction act;
+    act.sa_sigaction = signalHandler;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = SA_SIGINFO;
+    sigaction(SIGUSR2, &act, 0);
 }
 
 PdmPlugin::~PdmPlugin() {
+}
+
+void PdmPlugin::signalHandler(int signum, siginfo_t *sig_info, void *ucontext)
+{
+    LOG_DEBUG("%s %d signal callback for signal number: %d", __FUNCTION__, __LINE__, signum);
+    int shmId;
+    char *sharedMem;
+    unsigned int payloadLength;
+    std::string signalPayload;
+
+    if (sig_info) {
+        payloadLength = sig_info->si_value.sival_int;
+        LOG_DEBUG("%s %d payloadLength: %d", __FUNCTION__, __LINE__, payloadLength);
+        shmId = shmget(PDM_SHM_KEY, payloadLength, 0);
+        if (shmId != -1) {
+            sharedMem = (char *) shmat(shmId, (void*) 0, 0);
+
+            if(sharedMem != nullptr) {
+                signalPayload = sharedMem;
+                shmdt(sharedMem);
+                LOG_DEBUG("%s %d payload: %s payloadLength:%d", __FUNCTION__, __LINE__, signalPayload.c_str(), payloadLength);
+            }
+        }
+    }
 }
 
 void PdmPlugin::blockToasts(unsigned int timeMs) {

@@ -22,6 +22,9 @@
 
 #include <set>
 #include <unordered_map>
+#include <sys/shm.h>
+
+#define PDM_SHM_KEY 45697
 
 using namespace PdmUtils;
 
@@ -47,6 +50,7 @@ private:
             std::unordered_multimap<int, Device> &newDevices,
             std::unordered_map<int, Device> &mCurrentDevices);
     std::string getDeviceType(std::string current, std::string received);
+    static void signalHandler(int signum, siginfo_t *sig_info, void *ucontext);
 private:
     bool toastsBlocked;
     std::unordered_map<int, Device> mStorageDevices;
