@@ -20,6 +20,9 @@
 #include "Errors.h"
 #include "Logging.h"
 
+#include <pbnjson.hpp>
+#include <functional>
+
 using namespace pbnjson;
 using namespace EventMonitor;
 
@@ -45,6 +48,8 @@ const char *requiredServices[] = { "com.webos.service.pdm", nullptr };
 
 PmLogContext pluginLogContext;
 
+std::function<void(std::string)> cppSignalHandler = NULL;
+
 EventMonitor::Plugin* instantiatePlugin(int version,
         EventMonitor::Manager *manager) {
     if (version != EventMonitor::API_VERSION) {
@@ -57,6 +62,7 @@ EventMonitor::Plugin* instantiatePlugin(int version,
 PdmPlugin::PdmPlugin(Manager *_manager) :
         PluginBase(_manager, WEBOS_LOCALIZATION_PATH), toastsBlocked(false) {
     struct sigaction act;
+    cppSignalHandler = std::bind(&PdmPlugin::handlePdmEvent, this, std::placeholders::_1);
     act.sa_sigaction = signalHandler;
     sigemptyset(&act.sa_mask);
     act.sa_flags = SA_SIGINFO;
@@ -68,7 +74,8 @@ PdmPlugin::~PdmPlugin() {
 
 void PdmPlugin::signalHandler(int signum, siginfo_t *sig_info, void *ucontext)
 {
-    LOG_DEBUG("%s %d signal callback for signal number: %d", __FUNCTION__, __LINE__, signum);
+    LOG_DEBUG("%s %d signal callback for signal number: %d", __FUNCTION__,
+            __LINE__, signum);
     int shmId;
     char *sharedMem;
     unsigned int payloadLength;
@@ -79,15 +86,101 @@ void PdmPlugin::signalHandler(int signum, siginfo_t *sig_info, void *ucontext)
         LOG_DEBUG("%s %d payloadLength: %d", __FUNCTION__, __LINE__, payloadLength);
         shmId = shmget(PDM_SHM_KEY, payloadLength, 0);
         if (shmId != -1) {
-            sharedMem = (char *) shmat(shmId, (void*) 0, 0);
+            sharedMem = (char*) shmat(shmId, (void*) 0, 0);
 
-            if(sharedMem != nullptr) {
+            if (sharedMem != nullptr) {
                 signalPayload = sharedMem;
                 shmdt(sharedMem);
                 LOG_DEBUG("%s %d payload: %s payloadLength:%d", __FUNCTION__, __LINE__, signalPayload.c_str(), payloadLength);
+                cppSignalHandler(signalPayload);
+            } else {
+                LOG_DEBUG("%s no shared mem", __FUNCTION__);
             }
         }
+    } else {
+        LOG_DEBUG("%s signalinfo not found", __FUNCTION__);
     }
+}
+
+void PdmPlugin::handlePdmEvent(std::string payload)
+{
+    LOG_DEBUG("%s", __FUNCTION__);
+    pbnjson::JSchema parseSchema = pbnjson::JSchema::AllSchema();
+
+    pbnjson::JDomParser parser;
+
+    if (!parser.parse(payload, parseSchema)) {
+        LOG_DEBUG("%s payload parsing failed", __FUNCTION__);
+        return;
+    }
+
+    pbnjson::JValue eventObject = parser.getDom();
+    if (!eventObject.hasKey("pdmEvent")) {
+        LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
+        return;
+    }
+
+    auto pdmEvent = eventObject["pdmEvent"].asNumber<int>();
+    LOG_DEBUG("%s pdmEvent: %d", __FUNCTION__, pdmEvent);
+
+    switch (pdmEvent) {
+    case CONNECTING_EVENT: {
+        break;
+    }
+    case MAX_COUNT_REACHED_EVENT: {
+        createAlertForMaxUsbStorageDevices();
+        break;
+    }
+    case REMOVE_BEFORE_MOUNT_EVENT: {
+        break;
+    }
+    case REMOVE_BEFORE_MOUNT_MTP_EVENT: {
+        break;
+    }
+    case UNSUPPORTED_FS_FORMAT_NEEDED_EVENT: {
+        break;
+    }
+    case FSCK_TIMED_OUT_EVENT: {
+        break;
+    }
+    case FORMAT_STARTED_EVENT: {
+        break;
+    }
+    case FORMAT_SUCCESS_EVENT: {
+        break;
+    }
+    case FORMAT_FAIL_EVENT: {
+        break;
+    }
+    case REMOVE_UNSUPPORTED_FS_EVENT: {
+        break;
+    }
+    default: {
+        LOG_DEBUG("%s unknown pdmEvent: %d", __FUNCTION__, pdmEvent);
+    }
+    }
+
+}
+
+void PdmPlugin::createAlertForMaxUsbStorageDevices()
+{
+    LOG_DEBUG("%s", __FUNCTION__);
+
+    JArray buttons = JArray {};
+    std::string message = this->getLocString(MAX_USB_DEVICE_LIMIT_REACHED);
+    buttons.append(JObject{{"label", this->getLocString("OK")},
+                   {"position", "middle"},
+                   {"params", JObject{{"action","close"}}}});
+
+    JValue onClose = JObject{};
+
+    this->manager->createAlert(ALERT_ID_USB_MAX_STORAGE_DEVCIES,
+                               "", // No title
+                               message,
+                               false,
+                               "", // No icon
+                               buttons,
+                               onClose);
 }
 
 void PdmPlugin::blockToasts(unsigned int timeMs) {

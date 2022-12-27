@@ -63,6 +63,14 @@ static const char *MAX_USB_DEVICE_LIMIT_REACHED =
 static const char *DEVICE_UNSUPPORTED_FILESYSTEM =
         "This USB storage has an unsupported system and cannot be read.";
 
+//Alert IDs
+const std::string ALERT_ID_USB_STORAGE_DEV_REMOVED = "usbStorageDevRemoved";
+const std::string ALERT_ID_USB_STORAGE_DEV_UNSUPPORTED_FS =
+        "usbStorageDevUnsupportedFs";
+const std::string ALERT_ID_USB_MAX_STORAGE_DEVCIES = "usbMaxStorageDevices";
+const std::string ALERT_ID_USB_STORAGE_FSCK_TIME_OUT =
+        "usbStorageDevicesFsckTimeOut";
+
 //States that should match the state map entries
 enum DeviceState {
     CONNECTED_STATE, MOUNTED_STATE, RECONNECTING_STATE, DISCONNECTED_STATE
@@ -79,6 +87,19 @@ enum EventType {
     ATTACHED_DEVICE_STATUS_LIST,
     ATTACHED_STORAGE_DEVICE_LIST,
     ATTACHED_NONSTORAGE_DEVICE_LIST
+};
+
+enum PdmEventType {
+    CONNECTING_EVENT = 0,
+    MAX_COUNT_REACHED_EVENT,
+    REMOVE_BEFORE_MOUNT_EVENT,
+    REMOVE_BEFORE_MOUNT_MTP_EVENT,
+    UNSUPPORTED_FS_FORMAT_NEEDED_EVENT,
+    FSCK_TIMED_OUT_EVENT,
+    FORMAT_STARTED_EVENT,
+    FORMAT_SUCCESS_EVENT,
+    FORMAT_FAIL_EVENT,
+    REMOVE_UNSUPPORTED_FS_EVENT
 };
 
 //Device details

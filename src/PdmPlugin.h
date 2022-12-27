@@ -51,6 +51,8 @@ private:
             std::unordered_map<int, Device> &mCurrentDevices);
     std::string getDeviceType(std::string current, std::string received);
     static void signalHandler(int signum, siginfo_t *sig_info, void *ucontext);
+    void handlePdmEvent(std::string payload);
+    void createAlertForMaxUsbStorageDevices();
 private:
     bool toastsBlocked;
     std::unordered_map<int, Device> mStorageDevices;
