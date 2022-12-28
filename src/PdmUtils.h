@@ -18,6 +18,7 @@
 
 #include <unordered_set>
 #include <vector>
+#include <map>
 #include <string>
 
 namespace PdmUtils {
@@ -57,7 +58,6 @@ static const char *STORAGE_DEV_FORMAT_SUCCESS =
         "Formatting {DRIVEINFO} has been successfully completed.";
 static const char *STORAGE_DEV_FORMAT_FAIL =
         "Formatting {DRIVEINFO} has not been successfully completed.";
-static const char *DEVICE_FORMAT_FAILED = "Storage Device format failed";
 static const char *MAX_USB_DEVICE_LIMIT_REACHED =
         "Exceeded maximum number of allowable USB storage. You can connect up to 6 USB storages to your device";
 
@@ -100,6 +100,23 @@ enum PdmEventType {
     REMOVE_UNSUPPORTED_FS_EVENT
 };
 
+enum DeviceEventType {
+    STORAGE_DEVICE = 0,
+    NON_STORAGE_DEVICE,
+    ALL_DEVICE,
+    SOUND_DEVICE,
+    HID_DEVICE,
+    VIDEO_DEVICE,
+    GAMEPAD_DEVICE,
+    MTP_DEVICE,
+    PTP_DEVICE,
+    BLUETOOTH_DEVICE,
+    CDC_DEVICE,
+    AUTO_ANDROID_DEVICE,
+    NFC_DEVICE,
+    UNKNOWN_DEVICE
+};
+
 //Device details
 struct Device {
     int deviceNumber;
@@ -140,9 +157,87 @@ void getDeviceTypeString(std::string &text, std::string &deviceType) {
     }
 }
 
+std::string getDeviceTypeString(int deviceType) {
+
+    std::string device;
+    switch (deviceType) {
+    case STORAGE_DEVICE: {
+        device = "Storage device";
+        break;
+    }
+    case NON_STORAGE_DEVICE: {
+        device = "";
+        break;
+    }
+    case SOUND_DEVICE: {
+        device = "Sound device";
+        break;
+    }
+    case HID_DEVICE: {
+        device = "HID device";
+        break;
+    }
+    case VIDEO_DEVICE: {
+        device = "Camera device";
+        break;
+    }
+    case GAMEPAD_DEVICE: {
+        device = "XPAD device";
+        break;
+    }
+    case MTP_DEVICE: {
+        device = "MTP device";
+        break;
+    }
+    case PTP_DEVICE: {
+        device = "PTP device";
+        break;
+    }
+    case BLUETOOTH_DEVICE: {
+        device = "Bluetooth device";
+        break;
+    }
+    case CDC_DEVICE: {
+        device = "USB device";
+        break;
+    }
+    case AUTO_ANDROID_DEVICE: {
+        device = "Android device";
+        break;
+    }
+    case NFC_DEVICE: {
+        device = "NFC device";
+        break;
+    }
+    default: {
+        device = "Unknown device";
+    }
+    }
+
+    return device;
+}
+
 void getToastText(std::string &text, std::string deviceType,
         std::string deviceStatus) {
     getDeviceTypeString(text, deviceType);
     text += (" is " + deviceStatus);
+}
+
+std::string format(std::string text,
+        std::map<std::string, std::string> values) {
+    std::string formatted = text;
+    if (!values.empty()) {
+        std::string keyInBraces;
+
+        for (std::map<std::string, std::string>::iterator it = values.begin();
+                it != values.end(); ++it) {
+            keyInBraces = "{" + it->first + "}";
+            if (formatted.find(keyInBraces) != std::string::npos)
+                formatted.replace(formatted.find(keyInBraces),
+                        keyInBraces.length(), it->second);
+        }
+    }
+
+    return formatted;
 }
 } // namespace PdmUtils

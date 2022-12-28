@@ -21,6 +21,7 @@
 #include <event-monitor-api/pluginbase.hpp>
 
 #include <set>
+#include <map>
 #include <unordered_map>
 #include <sys/shm.h>
 
@@ -57,7 +58,12 @@ private:
     void createAlertForUnmountedDeviceRemoval(std::string deviceNumber);
     void createAlertForUnsupportedFileSystem(std::string deviceNumber);
     void closeUnsupportedFsAlert(std::string deviceNumber);
-    void showConnectingToast(std::string deviceType);
+    void createAlertForFsckTimeout(std::string deviceNumber,
+            std::string deviceName);
+    void showConnectingToast(int deviceType);
+    void showFormatStartedToast(std::string driveInfo);
+    void showFormatSuccessToast(std::string driveInfo);
+    void showFormatFailToast(std::string driveInfo);
 private:
     bool toastsBlocked;
     std::unordered_map<int, Device> mStorageDevices;

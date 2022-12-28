@@ -134,7 +134,7 @@ void PdmPlugin::handlePdmEvent(std::string payload) {
         if (!params.hasKey("deviceType")) {
             LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
         } else {
-            auto deviceType = params["deviceType"].asString();
+            auto deviceType = params["deviceType"].asNumber<int>();
             showConnectingToast(deviceType);
         }
         break;
@@ -171,15 +171,40 @@ void PdmPlugin::handlePdmEvent(std::string payload) {
         break;
     }
     case FSCK_TIMED_OUT_EVENT: {
+        if (!params.hasKey("deviceNum") || !params.hasKey("mountName")) {
+            LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
+        } else {
+            auto deviceNum = params["deviceNum"].asString();
+            auto deviceName = params["mountName"].asString();
+            createAlertForFsckTimeout(deviceNum, deviceName);
+        }
         break;
     }
     case FORMAT_STARTED_EVENT: {
+        if (!params.hasKey("driveInfo")) {
+            LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
+        } else {
+            auto driveInfo = params["driveInfo"].asString();
+            showFormatStartedToast(driveInfo);
+        }
         break;
     }
     case FORMAT_SUCCESS_EVENT: {
+        if (!params.hasKey("driveInfo")) {
+            LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
+        } else {
+            auto driveInfo = params["driveInfo"].asString();
+            showFormatSuccessToast(driveInfo);
+        }
         break;
     }
     case FORMAT_FAIL_EVENT: {
+        if (!params.hasKey("driveInfo")) {
+            LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
+        } else {
+            auto driveInfo = params["driveInfo"].asString();
+            showFormatFailToast(driveInfo);
+        }
         break;
     }
     case REMOVE_UNSUPPORTED_FS_EVENT: {
@@ -273,11 +298,69 @@ void PdmPlugin::closeUnsupportedFsAlert(std::string deviceNumber) {
             ALERT_ID_USB_STORAGE_DEV_UNSUPPORTED_FS + deviceNumber);
 }
 
-void PdmPlugin::showConnectingToast(std::string deviceType) {
+void PdmPlugin::showConnectingToast(int deviceType) {
     LOG_DEBUG("%s", __FUNCTION__);
-    std::string message;
-    getToastText(message, deviceType, "connecting.");
+    std::string message = getDeviceTypeString(deviceType) + " is connecting.";
     LOG_DEBUG("%s sending toast for connecting device", __FUNCTION__);
+    this->manager->createToast(message, //TODO: Use localization
+            DEVICE_CONNECTED_ICON_PATH);
+}
+
+void PdmPlugin::createAlertForFsckTimeout(std::string deviceNumber,
+        std::string deviceName) {
+    LOG_DEBUG("%s", __FUNCTION__);
+
+    std::string message = this->getLocString(USB_STORAGE_FSCK_TIME_OUT);
+    pbnjson::JValue buttons = pbnjson::JArray { pbnjson::JObject { { "label",
+            this->getLocString("CHECK & REPAIR") }, { "onclick",
+            "luna://com.webos.service.pdm/mountandFullFsck" },
+            { "params", pbnjson::JObject { { "needFsck", true }, { "mountName",
+                    deviceName } } } }, pbnjson::JObject { { "label",
+            this->getLocString("OPEN NOW") }, { "onclick",
+            "luna://com.webos.service.pdm/mountandFullFsck" }, { "params",
+            pbnjson::JObject { { "needFsck", false },
+                    { "mountName", deviceName } } } } };
+
+    JValue onClose = JObject { };
+
+    this->manager->createAlert(
+            ALERT_ID_USB_STORAGE_FSCK_TIME_OUT + deviceNumber, "", // No title
+            message, false, "", // No icon
+            buttons, onClose);
+}
+
+void PdmPlugin::showFormatStartedToast(std::string driveInfo) {
+    LOG_DEBUG("%s", __FUNCTION__);
+
+    std::map < std::string, std::string > values;
+    values.insert(pair<string, string>("DRIVEINFO", driveInfo));
+
+    std::string message = format(STORAGE_DEV_FORMAT_STARTED, values);
+    LOG_DEBUG("%s sending toast for format started..", __FUNCTION__);
+    this->manager->createToast(message, //TODO: Use localization
+            DEVICE_CONNECTED_ICON_PATH);
+}
+
+void PdmPlugin::showFormatSuccessToast(std::string driveInfo) {
+    LOG_DEBUG("%s", __FUNCTION__);
+
+    std::map < std::string, std::string > values;
+    values.insert(pair<string, string>("DRIVEINFO", driveInfo));
+
+    std::string message = format(STORAGE_DEV_FORMAT_SUCCESS, values);
+    LOG_DEBUG("%s sending toast for format success..", __FUNCTION__);
+    this->manager->createToast(message, //TODO: Use localization
+            DEVICE_CONNECTED_ICON_PATH);
+}
+
+void PdmPlugin::showFormatFailToast(std::string driveInfo) {
+    LOG_DEBUG("%s", __FUNCTION__);
+
+    std::map < std::string, std::string > values;
+    values.insert(pair<string, string>("DRIVEINFO", driveInfo));
+
+    std::string message = format(STORAGE_DEV_FORMAT_FAIL, values);
+    LOG_DEBUG("%s sending toast for format fail..", __FUNCTION__);
     this->manager->createToast(message, //TODO: Use localization
             DEVICE_CONNECTED_ICON_PATH);
 }
