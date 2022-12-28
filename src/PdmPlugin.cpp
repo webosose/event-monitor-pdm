@@ -62,7 +62,8 @@ EventMonitor::Plugin* instantiatePlugin(int version,
 PdmPlugin::PdmPlugin(Manager *_manager) :
         PluginBase(_manager, WEBOS_LOCALIZATION_PATH), toastsBlocked(false) {
     struct sigaction act;
-    cppSignalHandler = std::bind(&PdmPlugin::handlePdmEvent, this, std::placeholders::_1);
+    cppSignalHandler = std::bind(&PdmPlugin::handlePdmEvent, this,
+            std::placeholders::_1);
     act.sa_sigaction = signalHandler;
     sigemptyset(&act.sa_mask);
     act.sa_flags = SA_SIGINFO;
@@ -72,8 +73,7 @@ PdmPlugin::PdmPlugin(Manager *_manager) :
 PdmPlugin::~PdmPlugin() {
 }
 
-void PdmPlugin::signalHandler(int signum, siginfo_t *sig_info, void *ucontext)
-{
+void PdmPlugin::signalHandler(int signum, siginfo_t *sig_info, void *ucontext) {
     LOG_DEBUG("%s %d signal callback for signal number: %d", __FUNCTION__,
             __LINE__, signum);
     int shmId;
@@ -102,8 +102,7 @@ void PdmPlugin::signalHandler(int signum, siginfo_t *sig_info, void *ucontext)
     }
 }
 
-void PdmPlugin::handlePdmEvent(std::string payload)
-{
+void PdmPlugin::handlePdmEvent(std::string payload) {
     LOG_DEBUG("%s", __FUNCTION__);
     pbnjson::JSchema parseSchema = pbnjson::JSchema::AllSchema();
 
@@ -120,11 +119,24 @@ void PdmPlugin::handlePdmEvent(std::string payload)
         return;
     }
 
+    if (!eventObject.hasKey("parameters")) {
+        LOG_DEBUG("%s incomplete payload received no parameters", __FUNCTION__);
+        return;
+    }
+
+    pbnjson::JValue params = eventObject["parameters"];
+
     auto pdmEvent = eventObject["pdmEvent"].asNumber<int>();
     LOG_DEBUG("%s pdmEvent: %d", __FUNCTION__, pdmEvent);
 
     switch (pdmEvent) {
     case CONNECTING_EVENT: {
+        if (!params.hasKey("deviceType")) {
+            LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
+        } else {
+            auto deviceType = params["deviceType"].asString();
+            showConnectingToast(deviceType);
+        }
         break;
     }
     case MAX_COUNT_REACHED_EVENT: {
@@ -132,12 +144,30 @@ void PdmPlugin::handlePdmEvent(std::string payload)
         break;
     }
     case REMOVE_BEFORE_MOUNT_EVENT: {
+        if (!params.hasKey("deviceNum")) {
+            LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
+        } else {
+            auto deviceNum = params["deviceNum"].asString();
+            createAlertForUnmountedDeviceRemoval(deviceNum);
+        }
         break;
     }
     case REMOVE_BEFORE_MOUNT_MTP_EVENT: {
+        if (!params.hasKey("driveName")) {
+            LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
+        } else {
+            auto driveName = params["driveName"].asString();
+            unMountMtpDeviceAlert(driveName);
+        }
         break;
     }
     case UNSUPPORTED_FS_FORMAT_NEEDED_EVENT: {
+        if (!params.hasKey("deviceNum")) {
+            LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
+        } else {
+            auto deviceNum = params["deviceNum"].asString();
+            createAlertForUnsupportedFileSystem(deviceNum);
+        }
         break;
     }
     case FSCK_TIMED_OUT_EVENT: {
@@ -153,6 +183,12 @@ void PdmPlugin::handlePdmEvent(std::string payload)
         break;
     }
     case REMOVE_UNSUPPORTED_FS_EVENT: {
+        if (!params.hasKey("deviceNum")) {
+            LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
+        } else {
+            auto deviceNum = params["deviceNum"].asString();
+            closeUnsupportedFsAlert(deviceNum);
+        }
         break;
     }
     default: {
@@ -162,25 +198,88 @@ void PdmPlugin::handlePdmEvent(std::string payload)
 
 }
 
-void PdmPlugin::createAlertForMaxUsbStorageDevices()
-{
+void PdmPlugin::createAlertForMaxUsbStorageDevices() {
     LOG_DEBUG("%s", __FUNCTION__);
 
-    JArray buttons = JArray {};
+    JArray buttons = JArray { };
     std::string message = this->getLocString(MAX_USB_DEVICE_LIMIT_REACHED);
-    buttons.append(JObject{{"label", this->getLocString("OK")},
-                   {"position", "middle"},
-                   {"params", JObject{{"action","close"}}}});
+    buttons.append(JObject { { "label", this->getLocString("OK") }, {
+            "position", "middle" }, { "params",
+            JObject { { "action", "close" } } } });
 
-    JValue onClose = JObject{};
+    JValue onClose = JObject { };
 
-    this->manager->createAlert(ALERT_ID_USB_MAX_STORAGE_DEVCIES,
-                               "", // No title
-                               message,
-                               false,
-                               "", // No icon
-                               buttons,
-                               onClose);
+    this->manager->createAlert(ALERT_ID_USB_MAX_STORAGE_DEVCIES, "", // No title
+            message, false, "", // No icon
+            buttons, onClose);
+}
+
+void PdmPlugin::unMountMtpDeviceAlert(std::string driveName) {
+    LOG_DEBUG("%s", __FUNCTION__);
+
+    JArray buttons = JArray { };
+    std::string message = this->getLocString(REMOVE_USB_DEVICE_BEFORE_MOUNT);
+    buttons.append(JObject { { "label", this->getLocString("OK") }, {
+            "position", "middle" }, { "params",
+            JObject { { "action", "close" } } } });
+
+    JValue onClose = JObject { };
+
+    this->manager->createAlert(ALERT_ID_USB_STORAGE_DEV_REMOVED + driveName, "", // No title
+            message, false, "", // No icon
+            buttons, onClose);
+}
+
+void PdmPlugin::createAlertForUnmountedDeviceRemoval(std::string deviceNumber) {
+    LOG_DEBUG("%s", __FUNCTION__);
+    std::string alertIdFsckTimeout = ALERT_ID_USB_STORAGE_FSCK_TIME_OUT
+            + deviceNumber;
+    this->manager->closeAlert(alertIdFsckTimeout);
+
+    JArray buttons = JArray { };
+    std::string message = this->getLocString(REMOVE_USB_DEVICE_BEFORE_MOUNT);
+    buttons.append(JObject { { "label", this->getLocString("OK") }, {
+            "position", "middle" }, { "params",
+            JObject { { "action", "close" } } } });
+
+    JValue onClose = JObject { };
+
+    this->manager->createAlert(ALERT_ID_USB_STORAGE_DEV_REMOVED + deviceNumber,
+            "", // No title
+            message, false, "", // No icon
+            buttons, onClose);
+}
+
+void PdmPlugin::createAlertForUnsupportedFileSystem(std::string deviceNumber) {
+    LOG_DEBUG("%s", __FUNCTION__);
+
+    JArray buttons = JArray { };
+    std::string message = this->getLocString(USB_STORAGE_DEV_UNSUPPORTED_FS);
+    buttons.append(JObject { { "label", this->getLocString("OK") }, {
+            "position", "middle" }, { "params",
+            JObject { { "action", "close" } } } });
+
+    JValue onClose = JObject { };
+
+    this->manager->createAlert(
+            ALERT_ID_USB_STORAGE_DEV_UNSUPPORTED_FS + deviceNumber, "", // No title
+            message, false, "", // No icon
+            buttons, onClose);
+}
+
+void PdmPlugin::closeUnsupportedFsAlert(std::string deviceNumber) {
+    LOG_DEBUG("%s", __FUNCTION__);
+    this->manager->closeAlert(
+            ALERT_ID_USB_STORAGE_DEV_UNSUPPORTED_FS + deviceNumber);
+}
+
+void PdmPlugin::showConnectingToast(std::string deviceType) {
+    LOG_DEBUG("%s", __FUNCTION__);
+    std::string message;
+    getToastText(message, deviceType, "connecting.");
+    LOG_DEBUG("%s sending toast for connecting device", __FUNCTION__);
+    this->manager->createToast(message, //TODO: Use localization
+            DEVICE_CONNECTED_ICON_PATH);
 }
 
 void PdmPlugin::blockToasts(unsigned int timeMs) {

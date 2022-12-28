@@ -53,6 +53,11 @@ private:
     static void signalHandler(int signum, siginfo_t *sig_info, void *ucontext);
     void handlePdmEvent(std::string payload);
     void createAlertForMaxUsbStorageDevices();
+    void unMountMtpDeviceAlert(std::string driveName);
+    void createAlertForUnmountedDeviceRemoval(std::string deviceNumber);
+    void createAlertForUnsupportedFileSystem(std::string deviceNumber);
+    void closeUnsupportedFsAlert(std::string deviceNumber);
+    void showConnectingToast(std::string deviceType);
 private:
     bool toastsBlocked;
     std::unordered_map<int, Device> mStorageDevices;

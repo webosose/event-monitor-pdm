@@ -60,8 +60,6 @@ static const char *STORAGE_DEV_FORMAT_FAIL =
 static const char *DEVICE_FORMAT_FAILED = "Storage Device format failed";
 static const char *MAX_USB_DEVICE_LIMIT_REACHED =
         "Exceeded maximum number of allowable USB storage. You can connect up to 6 USB storages to your device";
-static const char *DEVICE_UNSUPPORTED_FILESYSTEM =
-        "This USB storage has an unsupported system and cannot be read.";
 
 //Alert IDs
 const std::string ALERT_ID_USB_STORAGE_DEV_REMOVED = "usbStorageDevRemoved";
@@ -116,22 +114,6 @@ struct Event {
     std::vector<Device> devices;
     std::unordered_set<int> deviceNums;
 };
-
-inline const char* getErrorText(ErrorCode errorCode) {
-    switch (errorCode) {
-    case FORMAT_FAILED: {
-        return DEVICE_FORMAT_FAILED;
-    }
-    case USB_DEVICE_LIMIT_REACHED: {
-        return MAX_USB_DEVICE_LIMIT_REACHED;
-    }
-    case UNSUPPORTED_FILESYSTEM: {
-        return DEVICE_UNSUPPORTED_FILESYSTEM;
-    }
-    default:
-        return "";
-    }
-}
 
 void getDeviceTypeString(std::string &text, std::string &deviceType) {
 
