@@ -22,31 +22,6 @@
 #include <string>
 
 namespace PdmUtils {
-static const char *STORAGE_DEVICE_CONNECTED = "Storage device is connected.";
-static const char *HID_DEVICE_CONNECTED = "HID device is connected.";
-static const char *VIDEO_DEVICE_CONNECTED = "Camera device is connected.";
-static const char *SOUND_DEVICE_CONNECTED = "Sound device is connected.";
-static const char *GAMEPAD_DEVICE_CONNECTED = "XPAD device is connected.";
-static const char *MTP_DEVICE_CONNECTED = "MTP device is connected.";
-static const char *PTP_DEVICE_CONNECTED = "PTP device is connected.";
-static const char *BLUETOOTH_DEVICE_CONNECTED = "Bluetooth device is connected.";
-static const char *CDC_DEVICE_CONNECTED = "USB device is connected.";
-static const char *UNKNOWN_DEVICE_CONNECTED = "Unknown device is connected.";
-static const char *STORAGE_DEVICE_DISCONNECTED =
-        "Storage device is disconnected.";
-static const char *HID_DEVICE_DISCONNECTED = "HID device is disconnected.";
-static const char *VIDEO_DEVICE_DISCONNECTED = "Camera device is disconnected.";
-static const char *SOUND_DEVICE_DISCONNECTED = "Sound device is disconnected.";
-static const char *GAMEPAD_DEVICE_DISCONNECTED = "XPAD device is disconnected.";
-static const char *MTP_DEVICE_DISCONNECTED = "MTP device is disconnected.";
-static const char *PTP_DEVICE_DISCONNECTED = "PTP device is disconnected.";
-static const char *BLUETOOTH_DEVICE_DISCONNECTED =
-        "Bluetooth device is disconnected.";
-static const char *CDC_DEVICE_DISCONNECTED = "USB device is disconnected.";
-static const char *UNKNOWN_DEVICE_DISCONNECTED =
-        "Unknown device is disconnected.";
-static const char *MAX_USB_STORAGE_DEVICES_REACHED =
-        "Exceeded maximum number of allowable USB storage. You can connect up to 6 USB storages to your device";
 static const char *REMOVE_USB_DEVICE_BEFORE_MOUNT =
         "After removing, please reconnect the usb device.";
 static const char *USB_STORAGE_DEV_UNSUPPORTED_FS =
@@ -69,22 +44,8 @@ const std::string ALERT_ID_USB_MAX_STORAGE_DEVCIES = "usbMaxStorageDevices";
 const std::string ALERT_ID_USB_STORAGE_FSCK_TIME_OUT =
         "usbStorageDevicesFsckTimeOut";
 
-//States that should match the state map entries
-enum DeviceState {
-    CONNECTED_STATE, MOUNTED_STATE, RECONNECTING_STATE, DISCONNECTED_STATE
-};
-
-enum ErrorCode {
-    NO_ERROR = 0,
-    FORMAT_FAILED,
-    USB_DEVICE_LIMIT_REACHED,
-    UNSUPPORTED_FILESYSTEM
-};
-
 enum EventType {
-    ATTACHED_DEVICE_STATUS_LIST,
-    ATTACHED_STORAGE_DEVICE_LIST,
-    ATTACHED_NONSTORAGE_DEVICE_LIST
+    ATTACHED_STORAGE_DEVICE_LIST, ATTACHED_NONSTORAGE_DEVICE_LIST
 };
 
 enum PdmEventType {
@@ -122,7 +83,6 @@ struct Device {
     int deviceNumber;
     std::string deviceType;
     std::string deviceStatus;
-    DeviceState deviceState = DeviceState::CONNECTED_STATE;
 };
 
 // Event details

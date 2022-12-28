@@ -20,10 +20,11 @@
 
 #include <event-monitor-api/pluginbase.hpp>
 
+#include <sys/shm.h>
+
 #include <set>
 #include <map>
 #include <unordered_map>
-#include <sys/shm.h>
 
 #define PDM_SHM_KEY 45697
 
@@ -37,8 +38,6 @@ public:
     EventMonitor::UnloadResult stopMonitoring(const std::string &service);
 
 private:
-    void attachedDeviceStatusCallback(pbnjson::JValue &previousValue,
-            pbnjson::JValue &value);
     void attachedStorageDeviceListCallback(pbnjson::JValue &previousValue,
             pbnjson::JValue &value);
     void attachedNonStorageDeviceListCallback(pbnjson::JValue &previousValue,
