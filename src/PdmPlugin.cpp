@@ -1,4 +1,4 @@
-// Copyright (c) 2022 LG Electronics, Inc.
+// Copyright (c) 2022-2023 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -78,7 +78,6 @@ void PdmPlugin::signalHandler(int signum, siginfo_t *sig_info, void *ucontext) {
     int shmId;
     char *sharedMem;
     unsigned int payloadLength;
-    std::string signalPayload;
 
     if (sig_info) {
         payloadLength = sig_info->si_value.sival_int;
@@ -88,7 +87,7 @@ void PdmPlugin::signalHandler(int signum, siginfo_t *sig_info, void *ucontext) {
             sharedMem = (char*) shmat(shmId, (void*) 0, 0);
 
             if (sharedMem != nullptr) {
-                signalPayload = sharedMem;
+                std::string signalPayload(sharedMem, payloadLength);
                 shmdt(sharedMem);
                 LOG_DEBUG("%s %d payload: %s payloadLength:%d", __FUNCTION__, __LINE__, signalPayload.c_str(), payloadLength);
                 cppSignalHandler(signalPayload);
@@ -301,6 +300,7 @@ void PdmPlugin::showConnectingToast(int deviceType) {
     LOG_DEBUG("%s", __FUNCTION__);
     std::string message = getDeviceTypeString(deviceType) + " is connecting.";
     LOG_DEBUG("%s sending toast for connecting device", __FUNCTION__);
+    message = this->getLocString(message);
     this->manager->createToast(message, DEVICE_CONNECTED_ICON_PATH);
 }
 
@@ -335,6 +335,7 @@ void PdmPlugin::showFormatStartedToast(std::string driveInfo) {
 
     std::string message = format(STORAGE_DEV_FORMAT_STARTED, values);
     LOG_DEBUG("%s sending toast for format started..", __FUNCTION__);
+    message = this->getLocString(message);
     this->manager->createToast(message, DEVICE_CONNECTED_ICON_PATH);
 }
 
@@ -346,6 +347,7 @@ void PdmPlugin::showFormatSuccessToast(std::string driveInfo) {
 
     std::string message = format(STORAGE_DEV_FORMAT_SUCCESS, values);
     LOG_DEBUG("%s sending toast for format success..", __FUNCTION__);
+    message = this->getLocString(message);
     this->manager->createToast(message, DEVICE_CONNECTED_ICON_PATH);
 }
 
@@ -357,6 +359,7 @@ void PdmPlugin::showFormatFailToast(std::string driveInfo) {
 
     std::string message = format(STORAGE_DEV_FORMAT_FAIL, values);
     LOG_DEBUG("%s sending toast for format fail..", __FUNCTION__);
+    message = this->getLocString(message);
     this->manager->createToast(message, DEVICE_CONNECTED_ICON_PATH);
 }
 
@@ -548,6 +551,7 @@ void PdmPlugin::handleEvent(Event event) {
             getToastText(message, device.second.deviceType, "disconnected.");
             LOG_DEBUG("%s sending toast for disconnected device num: %d",
                     __FUNCTION__, device.second.deviceNumber);
+            message = this->getLocString(message);
             this->manager->createToast(message, DEVICE_CONNECTED_ICON_PATH);
         }
         mDevices.clear();
@@ -565,6 +569,7 @@ void PdmPlugin::handleEvent(Event event) {
                 getToastText(message, it->second.deviceType, "disconnected.");
                 LOG_DEBUG("%s sending toast for disconnected devicenumber: %d",
                         __FUNCTION__, it->second.deviceNumber);
+                message = this->getLocString(message);
                 this->manager->createToast(message, DEVICE_CONNECTED_ICON_PATH);
                 it = mDevices.erase(it);
             } else {
@@ -609,6 +614,7 @@ void PdmPlugin::processNewEntries(std::set<int> &deviceNums,
                     "%s sending toast for connected devicenumber: %d type: %s msg: %s",
                     __FUNCTION__, device.deviceNumber,
                     device.deviceType.c_str(), message.c_str());
+            message = this->getLocString(message);
             this->manager->createToast(message, DEVICE_CONNECTED_ICON_PATH);
         }
     }
