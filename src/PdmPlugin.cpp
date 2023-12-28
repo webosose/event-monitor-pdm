@@ -589,7 +589,7 @@ void PdmPlugin::processNewEntries(std::set<int> &deviceNums,
         auto count = newDevices.count(x);
         LOG_DEBUG("%s deviceNum %d count %zu ", __FUNCTION__, x, count);
 
-        if (count) {
+        if (count && (newDevices.find(x) != newDevices.end())) {
             Device device = newDevices.find(x)->second;
             //If count is 1, then deviceType is always proper
             if (count >= 2) {
