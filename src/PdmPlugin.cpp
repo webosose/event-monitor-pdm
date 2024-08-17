@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 LG Electronics, Inc.
+// Copyright (c) 2022-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ void PdmPlugin::signalHandler(int signum, siginfo_t *sig_info, void *ucontext) {
                 std::string signalPayload(sharedMem, payloadLength);
                 shmdt(sharedMem);
                 LOG_DEBUG("%s %d payload: %s payloadLength:%d", __FUNCTION__, __LINE__, signalPayload.c_str(), payloadLength);
-                cppSignalHandler(signalPayload);
+                cppSignalHandler(std::move(signalPayload));
             } else {
                 LOG_DEBUG("%s no shared mem", __FUNCTION__);
             }
@@ -146,7 +146,7 @@ void PdmPlugin::handlePdmEvent(std::string payload) {
             LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
         } else {
             auto deviceNum = params["deviceNum"].asString();
-            createAlertForUnmountedDeviceRemoval(deviceNum);
+            createAlertForUnmountedDeviceRemoval(std::move(deviceNum));
         }
         break;
     }
@@ -155,7 +155,7 @@ void PdmPlugin::handlePdmEvent(std::string payload) {
             LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
         } else {
             auto driveName = params["driveName"].asString();
-            unMountMtpDeviceAlert(driveName);
+            unMountMtpDeviceAlert(std::move(driveName));
         }
         break;
     }
@@ -164,7 +164,7 @@ void PdmPlugin::handlePdmEvent(std::string payload) {
             LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
         } else {
             auto deviceNum = params["deviceNum"].asString();
-            createAlertForUnsupportedFileSystem(deviceNum);
+            createAlertForUnsupportedFileSystem(std::move(deviceNum));
         }
         break;
     }
@@ -174,7 +174,7 @@ void PdmPlugin::handlePdmEvent(std::string payload) {
         } else {
             auto deviceNum = params["deviceNum"].asString();
             auto deviceName = params["mountName"].asString();
-            createAlertForFsckTimeout(deviceNum, deviceName);
+            createAlertForFsckTimeout(std::move(deviceNum), std::move(deviceName));
         }
         break;
     }
@@ -183,7 +183,7 @@ void PdmPlugin::handlePdmEvent(std::string payload) {
             LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
         } else {
             auto driveInfo = params["driveInfo"].asString();
-            showFormatStartedToast(driveInfo);
+            showFormatStartedToast(std::move(driveInfo));
         }
         break;
     }
@@ -192,7 +192,7 @@ void PdmPlugin::handlePdmEvent(std::string payload) {
             LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
         } else {
             auto driveInfo = params["driveInfo"].asString();
-            showFormatSuccessToast(driveInfo);
+            showFormatSuccessToast(std::move(driveInfo));
         }
         break;
     }
@@ -201,7 +201,7 @@ void PdmPlugin::handlePdmEvent(std::string payload) {
             LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
         } else {
             auto driveInfo = params["driveInfo"].asString();
-            showFormatFailToast(driveInfo);
+            showFormatFailToast(std::move(driveInfo));
         }
         break;
     }
@@ -210,7 +210,7 @@ void PdmPlugin::handlePdmEvent(std::string payload) {
             LOG_DEBUG("%s incomplete payload received", __FUNCTION__);
         } else {
             auto deviceNum = params["deviceNum"].asString();
-            closeUnsupportedFsAlert(deviceNum);
+            closeUnsupportedFsAlert(std::move(deviceNum));
         }
         break;
     }
@@ -333,7 +333,7 @@ void PdmPlugin::showFormatStartedToast(std::string driveInfo) {
     std::map < std::string, std::string > values;
     values.insert(pair<string, string>("DRIVEINFO", driveInfo));
 
-    std::string message = format(STORAGE_DEV_FORMAT_STARTED, values);
+    std::string message = format(STORAGE_DEV_FORMAT_STARTED, std::move(values));
     LOG_DEBUG("%s sending toast for format started..", __FUNCTION__);
     message = this->getLocString(message);
     this->manager->createToast(message, DEVICE_CONNECTED_ICON_PATH);
@@ -345,7 +345,7 @@ void PdmPlugin::showFormatSuccessToast(std::string driveInfo) {
     std::map < std::string, std::string > values;
     values.insert(pair<string, string>("DRIVEINFO", driveInfo));
 
-    std::string message = format(STORAGE_DEV_FORMAT_SUCCESS, values);
+    std::string message = format(STORAGE_DEV_FORMAT_SUCCESS, std::move(values));
     LOG_DEBUG("%s sending toast for format success..", __FUNCTION__);
     message = this->getLocString(message);
     this->manager->createToast(message, DEVICE_CONNECTED_ICON_PATH);
@@ -357,7 +357,7 @@ void PdmPlugin::showFormatFailToast(std::string driveInfo) {
     std::map < std::string, std::string > values;
     values.insert(pair<string, string>("DRIVEINFO", driveInfo));
 
-    std::string message = format(STORAGE_DEV_FORMAT_FAIL, values);
+    std::string message = format(STORAGE_DEV_FORMAT_FAIL, std::move(values));
     LOG_DEBUG("%s sending toast for format fail..", __FUNCTION__);
     message = this->getLocString(message);
     this->manager->createToast(message, DEVICE_CONNECTED_ICON_PATH);
@@ -450,7 +450,7 @@ void PdmPlugin::attachedStorageDeviceListCallback(
             event.devices.push_back(device);
             event.deviceNums.insert(deviceNum);
         }
-        handleEvent(event);
+        handleEvent(std::move(event));
     } else {
         LOG_DEBUG("%s toast is blocked now", __FUNCTION__);
         saveAlreadyConnectedDeviceList(previousValue, value,
@@ -505,13 +505,13 @@ void PdmPlugin::attachedNonStorageDeviceListCallback(
 
             auto deviceType =
                     nonStorageDeviceListObj[i]["deviceType"].asString();
-            device.deviceType = deviceType;
+            device.deviceType = std::move(deviceType);
             LOG_DEBUG("%s deviceType: %s", __FUNCTION__,
                     device.deviceType.c_str());
             event.devices.push_back(device);
             event.deviceNums.insert(deviceNum);
         }
-        handleEvent(event);
+        handleEvent(std::move(event));
     } else {
         LOG_DEBUG("%s toast is blocked now", __FUNCTION__);
         saveAlreadyConnectedDeviceList(previousValue, value,
@@ -546,7 +546,7 @@ void PdmPlugin::handleEvent(Event event) {
         LOG_DEBUG(
                 "%s All connected devices are removed or no connected device exists",
                 __FUNCTION__);
-        for (auto device : mDevices) {
+        for (const auto& device : mDevices) {
             std::string message;
             getToastText(message, device.second.deviceType, "disconnected.");
             LOG_DEBUG("%s sending toast for disconnected device num: %d",
@@ -626,13 +626,13 @@ std::string PdmPlugin::getDeviceType(std::string current,
     LOG_DEBUG("%s current: %s received: %s", __FUNCTION__, current.c_str(),
             received.c_str());
     if (current.empty()) {
-        current = received;
+        current = std::move(received);
     } else if ((0 == current.compare("HID"))
             && (0 != received.compare("HID"))) {
-        current = received;
+        current = std::move(received);
     } else if ((0 == current.compare("SOUND"))
             && (0 == received.compare("CAM"))) {
-        current = received;
+        current = std::move(received);
     }
     LOG_DEBUG("%s new current: %s", __FUNCTION__, current.c_str());
     return current;

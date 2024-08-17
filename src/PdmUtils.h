@@ -1,4 +1,4 @@
-// Copyright (c) 2022 LG Electronics, Inc.
+// Copyright (c) 2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -185,7 +185,7 @@ void getToastText(std::string &text, std::string deviceType,
 
 std::string format(std::string text,
         std::map<std::string, std::string> values) {
-    std::string formatted = text;
+    std::string formatted = std::move(text);
     if (!values.empty()) {
         std::string keyInBraces;
 
